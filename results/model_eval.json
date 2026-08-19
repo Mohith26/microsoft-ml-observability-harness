@@ -1,0 +1,76 @@
+{
+  "dataset": "UCI Adult (OpenML 'adult' version 2, 48842 rows)",
+  "model": "LogisticRegression (median/constant impute, standardize, one-hot, max_iter=2000)",
+  "degraded_model": "same pipeline retrained with 40% labels flipped (seed 42)",
+  "evaluated_on": "golden split (held out from training)",
+  "healthy": {
+    "accuracy": 0.8545249795249795,
+    "roc_auc": 0.908871617454249,
+    "ece": 0.010073748703812602,
+    "slices": {
+      "sex=Female": {
+        "n": 3238,
+        "accuracy": 0.9286596664607782
+      },
+      "sex=Male": {
+        "n": 6530,
+        "accuracy": 0.8177641653905053
+      },
+      "race=Amer-Indian-Eskimo": {
+        "n": 89,
+        "accuracy": 0.8764044943820225
+      },
+      "race=Asian-Pac-Islander": {
+        "n": 314,
+        "accuracy": 0.8121019108280255
+      },
+      "race=Black": {
+        "n": 954,
+        "accuracy": 0.90041928721174
+      },
+      "race=Other": {
+        "n": 89,
+        "accuracy": 0.898876404494382
+      },
+      "race=White": {
+        "n": 8322,
+        "accuracy": 0.8501562124489306
+      }
+    }
+  },
+  "degraded": {
+    "accuracy": 0.8314905814905815,
+    "roc_auc": 0.8749148275963137,
+    "ece": 0.2620687037102831,
+    "slices": {
+      "sex=Female": {
+        "n": 3238,
+        "accuracy": 0.913218035824583
+      },
+      "sex=Male": {
+        "n": 6530,
+        "accuracy": 0.7909647779479326
+      },
+      "race=Amer-Indian-Eskimo": {
+        "n": 89,
+        "accuracy": 0.8764044943820225
+      },
+      "race=Asian-Pac-Islander": {
+        "n": 314,
+        "accuracy": 0.7484076433121019
+      },
+      "race=Black": {
+        "n": 954,
+        "accuracy": 0.8930817610062893
+      },
+      "race=Other": {
+        "n": 89,
+        "accuracy": 0.898876404494382
+      },
+      "race=White": {
+        "n": 8322,
+        "accuracy": 0.8263638548425859
+      }
+    }
+  }
+}

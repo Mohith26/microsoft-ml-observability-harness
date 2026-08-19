@@ -1,0 +1,8 @@
+{
+  "n_random_cases": 200,
+  "seed": 123,
+  "ks_statistic_max_abs_deviation_vs_scipy": 0.0,
+  "ks_pvalue_max_abs_deviation_vs_scipy_asymp": 0.02071880059405551,
+  "ks_pvalue_note": "own p-value uses the Kolmogorov limit distribution; scipy asymp mode uses a finite-n refinement (kstwo), hence small deviation",
+  "psi_max_abs_deviation_vs_naive_oracle": 1.1102230246251565e-16
+}

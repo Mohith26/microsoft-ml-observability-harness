@@ -1,0 +1,106 @@
+{
+  "honesty_tag": "Ground truth is INJECTED/synthetic drift applied to real held-out UCI Adult rows; this is not real-world drift. False positives are windows sampled i.i.d. from the same traffic pool that were still flagged.",
+  "seed": 7,
+  "n_windows": 240,
+  "window_size": 500,
+  "n_drift_windows": 95,
+  "n_normal_windows": 145,
+  "n_episodes": 32,
+  "monitor_config": {
+    "window_size": 500,
+    "n_bins": 10,
+    "baseline_sample_size": 2000,
+    "psi_threshold": 0.2,
+    "prediction_psi_threshold": 0.2,
+    "ks_stat_threshold": 0.1,
+    "ks_pvalue_threshold": 0.001,
+    "missing_rate_delta": 0.1,
+    "novelty_rate_threshold": 0.01,
+    "out_of_range_rate_threshold": 0.01,
+    "rare_category_threshold": 0.01
+  },
+  "window_level": {
+    "overall": {
+      "precision": 0.9896,
+      "recall": 1.0,
+      "f1": 0.9948,
+      "tp": 95,
+      "fp": 1,
+      "fn": 0,
+      "tn": 144
+    },
+    "per_scenario_recall": {
+      "covariate_shift": {
+        "windows": 23,
+        "detected": 23,
+        "recall": 1.0
+      },
+      "feature_scaling": {
+        "windows": 21,
+        "detected": 21,
+        "recall": 1.0
+      },
+      "missing_spike": {
+        "windows": 15,
+        "detected": 15,
+        "recall": 1.0
+      },
+      "category_novelty": {
+        "windows": 18,
+        "detected": 18,
+        "recall": 1.0
+      },
+      "prediction_shift": {
+        "windows": 18,
+        "detected": 18,
+        "recall": 1.0
+      }
+    }
+  },
+  "episode_level": {
+    "overall": {
+      "precision": 0.9697,
+      "recall": 1.0,
+      "f1": 0.9846,
+      "tp": 32,
+      "fp": 1,
+      "fn": 0,
+      "note": "tp = alarm segments overlapping a true episode; an episode counts detected if any alarm overlaps it"
+    },
+    "per_scenario": {
+      "category_novelty": {
+        "episodes": 6,
+        "detected": 6,
+        "recall": 1.0
+      },
+      "missing_spike": {
+        "episodes": 6,
+        "detected": 6,
+        "recall": 1.0
+      },
+      "covariate_shift": {
+        "episodes": 7,
+        "detected": 7,
+        "recall": 1.0
+      },
+      "prediction_shift": {
+        "episodes": 6,
+        "detected": 6,
+        "recall": 1.0
+      },
+      "feature_scaling": {
+        "episodes": 7,
+        "detected": 7,
+        "recall": 1.0
+      }
+    }
+  },
+  "false_positive_window_reasons": [
+    {
+      "window": 124,
+      "reasons": [
+        "fnlwgt:ks"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,253 @@
+{
+  "thresholds": {
+    "min_accuracy": 0.84,
+    "min_auc": 0.88,
+    "max_ece": 0.06,
+    "min_slice_accuracy": 0.75,
+    "slice_features": [
+      "sex",
+      "race"
+    ],
+    "min_slice_size": 50
+  },
+  "models": {
+    "healthy": {
+      "gates": [
+        {
+          "name": "accuracy",
+          "value": 0.8545249795249795,
+          "threshold": 0.84,
+          "direction": ">=",
+          "passed": true
+        },
+        {
+          "name": "roc_auc",
+          "value": 0.908871617454249,
+          "threshold": 0.88,
+          "direction": ">=",
+          "passed": true
+        },
+        {
+          "name": "ece",
+          "value": 0.010073748703812602,
+          "threshold": 0.06,
+          "direction": "<=",
+          "passed": true
+        },
+        {
+          "name": "slice_accuracy[sex=Female]",
+          "value": 0.9286596664607782,
+          "threshold": 0.75,
+          "direction": ">=",
+          "passed": true
+        },
+        {
+          "name": "slice_accuracy[sex=Male]",
+          "value": 0.8177641653905053,
+          "threshold": 0.75,
+          "direction": ">=",
+          "passed": true
+        },
+        {
+          "name": "slice_accuracy[race=Amer-Indian-Eskimo]",
+          "value": 0.8764044943820225,
+          "threshold": 0.75,
+          "direction": ">=",
+          "passed": true
+        },
+        {
+          "name": "slice_accuracy[race=Asian-Pac-Islander]",
+          "value": 0.8121019108280255,
+          "threshold": 0.75,
+          "direction": ">=",
+          "passed": true
+        },
+        {
+          "name": "slice_accuracy[race=Black]",
+          "value": 0.90041928721174,
+          "threshold": 0.75,
+          "direction": ">=",
+          "passed": true
+        },
+        {
+          "name": "slice_accuracy[race=Other]",
+          "value": 0.898876404494382,
+          "threshold": 0.75,
+          "direction": ">=",
+          "passed": true
+        },
+        {
+          "name": "slice_accuracy[race=White]",
+          "value": 0.8501562124489306,
+          "threshold": 0.75,
+          "direction": ">=",
+          "passed": true
+        }
+      ],
+      "slices": {
+        "sex=Female": {
+          "n": 3238,
+          "accuracy": 0.9286596664607782,
+          "gated": true,
+          "passed": true
+        },
+        "sex=Male": {
+          "n": 6530,
+          "accuracy": 0.8177641653905053,
+          "gated": true,
+          "passed": true
+        },
+        "race=Amer-Indian-Eskimo": {
+          "n": 89,
+          "accuracy": 0.8764044943820225,
+          "gated": true,
+          "passed": true
+        },
+        "race=Asian-Pac-Islander": {
+          "n": 314,
+          "accuracy": 0.8121019108280255,
+          "gated": true,
+          "passed": true
+        },
+        "race=Black": {
+          "n": 954,
+          "accuracy": 0.90041928721174,
+          "gated": true,
+          "passed": true
+        },
+        "race=Other": {
+          "n": 89,
+          "accuracy": 0.898876404494382,
+          "gated": true,
+          "passed": true
+        },
+        "race=White": {
+          "n": 8322,
+          "accuracy": 0.8501562124489306,
+          "gated": true,
+          "passed": true
+        }
+      },
+      "overall_passed": true
+    },
+    "degraded": {
+      "gates": [
+        {
+          "name": "accuracy",
+          "value": 0.8314905814905815,
+          "threshold": 0.84,
+          "direction": ">=",
+          "passed": false
+        },
+        {
+          "name": "roc_auc",
+          "value": 0.8749148275963137,
+          "threshold": 0.88,
+          "direction": ">=",
+          "passed": false
+        },
+        {
+          "name": "ece",
+          "value": 0.2620687037102831,
+          "threshold": 0.06,
+          "direction": "<=",
+          "passed": false
+        },
+        {
+          "name": "slice_accuracy[sex=Female]",
+          "value": 0.913218035824583,
+          "threshold": 0.75,
+          "direction": ">=",
+          "passed": true
+        },
+        {
+          "name": "slice_accuracy[sex=Male]",
+          "value": 0.7909647779479326,
+          "threshold": 0.75,
+          "direction": ">=",
+          "passed": true
+        },
+        {
+          "name": "slice_accuracy[race=Amer-Indian-Eskimo]",
+          "value": 0.8764044943820225,
+          "threshold": 0.75,
+          "direction": ">=",
+          "passed": true
+        },
+        {
+          "name": "slice_accuracy[race=Asian-Pac-Islander]",
+          "value": 0.7484076433121019,
+          "threshold": 0.75,
+          "direction": ">=",
+          "passed": false
+        },
+        {
+          "name": "slice_accuracy[race=Black]",
+          "value": 0.8930817610062893,
+          "threshold": 0.75,
+          "direction": ">=",
+          "passed": true
+        },
+        {
+          "name": "slice_accuracy[race=Other]",
+          "value": 0.898876404494382,
+          "threshold": 0.75,
+          "direction": ">=",
+          "passed": true
+        },
+        {
+          "name": "slice_accuracy[race=White]",
+          "value": 0.8263638548425859,
+          "threshold": 0.75,
+          "direction": ">=",
+          "passed": true
+        }
+      ],
+      "slices": {
+        "sex=Female": {
+          "n": 3238,
+          "accuracy": 0.913218035824583,
+          "gated": true,
+          "passed": true
+        },
+        "sex=Male": {
+          "n": 6530,
+          "accuracy": 0.7909647779479326,
+          "gated": true,
+          "passed": true
+        },
+        "race=Amer-Indian-Eskimo": {
+          "n": 89,
+          "accuracy": 0.8764044943820225,
+          "gated": true,
+          "passed": true
+        },
+        "race=Asian-Pac-Islander": {
+          "n": 314,
+          "accuracy": 0.7484076433121019,
+          "gated": true,
+          "passed": false
+        },
+        "race=Black": {
+          "n": 954,
+          "accuracy": 0.8930817610062893,
+          "gated": true,
+          "passed": true
+        },
+        "race=Other": {
+          "n": 89,
+          "accuracy": 0.898876404494382,
+          "gated": true,
+          "passed": true
+        },
+        "race=White": {
+          "n": 8322,
+          "accuracy": 0.8263638548425859,
+          "gated": true,
+          "passed": true
+        }
+      },
+      "overall_passed": false
+    }
+  }
+}

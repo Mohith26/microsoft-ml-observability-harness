@@ -1,0 +1,74 @@
+{
+  "honesty_tag": "In-process FastAPI TestClient latencies (no network socket); drift-engine throughput is wall-clock over pre-materialized windows. Best of 5 runs reported.",
+  "machine": "local dev machine, CPU only",
+  "drift_engine": {
+    "rows_per_run": 10000,
+    "runs_rows_per_sec": [
+      135165.4,
+      148827.7,
+      146956.7,
+      140330.4,
+      142270.0
+    ],
+    "best_rows_per_sec": 148827.7,
+    "median_rows_per_sec": 142270.0
+  },
+  "score_endpoint": {
+    "requests_per_run": 1000,
+    "runs": [
+      {
+        "p50_ms": 2.613,
+        "p95_ms": 3.108
+      },
+      {
+        "p50_ms": 2.815,
+        "p95_ms": 3.34
+      },
+      {
+        "p50_ms": 3.136,
+        "p95_ms": 3.828
+      },
+      {
+        "p50_ms": 3.48,
+        "p95_ms": 4.075
+      },
+      {
+        "p50_ms": 3.54,
+        "p95_ms": 4.249
+      }
+    ],
+    "best": {
+      "p50_ms": 2.613,
+      "p95_ms": 3.108
+    }
+  },
+  "drift_endpoint": {
+    "requests_per_run": 200,
+    "runs": [
+      {
+        "p50_ms": 1.942,
+        "p95_ms": 2.476
+      },
+      {
+        "p50_ms": 1.937,
+        "p95_ms": 2.418
+      },
+      {
+        "p50_ms": 2.011,
+        "p95_ms": 2.593
+      },
+      {
+        "p50_ms": 2.102,
+        "p95_ms": 2.697
+      },
+      {
+        "p50_ms": 2.089,
+        "p95_ms": 2.683
+      }
+    ],
+    "best": {
+      "p50_ms": 1.937,
+      "p95_ms": 2.418
+    }
+  }
+}
