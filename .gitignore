@@ -1,0 +1,16 @@
+# virtualenv
+.venv/
+
+# data: never commit datasets (OpenML cache + derived splits)
+data/
+
+# regeneratable model artifacts (rebuild with model/train.py)
+model/artifacts/
+*.pkl
+
+# python
+__pycache__/
+*.pyc
+.pytest_cache/
+.coverage
+htmlcov/
