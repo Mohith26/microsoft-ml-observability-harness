@@ -1,20 +1,19 @@
-# RESULTS
+# Measured results
 
-Every number below was measured by an actual run on 2026-08-19 (local dev
+These are my benchmark notes from an actual run on 2026-08-19 (local dev
 machine, macOS, CPU only, Python 3.9.6). Raw outputs are committed under
-`results/`. Reproduce commands assume the venv from README Quickstart and that
+`results/`. Reproduce commands assume the venv from the README and that
 `model/train.py` has been run first.
 
 ## 1. Drift detection vs ground-truth injected episodes
-
-**Honesty tag:** ground truth is INJECTED/synthetic drift replayed over real
-held-out UCI Adult traffic rows — not real-world drift.
 
 Setup: 240 tumbling windows x 500 rows, seed 7; 32 labeled drift episodes
 (95 drift windows, 145 normal windows) across 5 scenario types. Detector =
 `WindowMonitor` with default `MonitorConfig` thresholds (PSI > 0.2, KS p <
 1e-3 & stat > 0.1, missing-rate delta > 0.10, novelty > 0.01, out-of-range >
-0.01, prediction PSI > 0.2).
+0.01, prediction PSI > 0.2). Keep in mind the ground truth here is injected
+drift replayed over real held-out UCI Adult traffic rows, not real-world
+drift, so these numbers measure detector correctness, not field performance.
 
 Reproduce: `.venv/bin/python eval/run_eval.py` -> `results/drift_eval.json`
 
@@ -24,8 +23,8 @@ Reproduce: `.venv/bin/python eval/run_eval.py` -> `results/drift_eval.json`
 |---|---|---|---|---|---|---|
 | 0.9896 | 1.0000 | 0.9948 | 95 | 1 | 0 | 144 |
 
-The 1 false positive was a normal window flagged by the KS test on `fnlwgt`
-(reasons logged in `results/drift_eval.json`).
+The single false positive was a normal window flagged by the KS test on
+`fnlwgt` (reasons logged in `results/drift_eval.json`).
 
 ### Episode level (overall)
 
@@ -33,8 +32,8 @@ The 1 false positive was a normal window flagged by the KS test on `fnlwgt`
 |---|---|---|---|---|
 | 0.9697 | 1.0000 | 0.9846 | 32/32 | 1 |
 
-(An episode counts as detected if >=1 alarm segment overlaps it; an alarm
-segment is a false positive if it overlaps no true episode.)
+An episode counts as detected if at least one alarm segment overlaps it; an
+alarm segment is a false positive if it overlaps no true episode.
 
 ### Per scenario type
 
@@ -46,17 +45,18 @@ segment is a false positive if it overlaps no true episode.)
 | category_novelty (10% novel workclass) | 18 | 1.00 | 6 | 1.00 |
 | prediction_shift (score^2 resampling) | 18 | 1.00 | 6 | 1.00 |
 
-Window-level precision is global (false positives are not attributable to a
-scenario type). Note: before rare-category pooling was added to categorical
-PSI, `native-country` (41 categories, many <1% share) caused 77 false-positive
-windows (precision 0.55); pooling rare categories into a `__rare__` bucket
-removed them. Kept here for honesty about detector tuning.
+Window-level precision is global, since a false positive isn't attributable
+to any one scenario type. Worth recording: before I added rare-category
+pooling to the categorical PSI, `native-country` (41 categories, many with
+under 1% share) caused 77 false-positive windows and precision was 0.55.
+Pooling rare categories into a `__rare__` bucket removed all of them. I'm
+keeping that in the notes because it changed the headline number a lot.
 
 ## 2. Statistic-oracle deviations
 
 Reproduce: `.venv/bin/python bench/oracle_check.py` ->
 `results/oracle_check.json` (200 random sample pairs, mixed distributions
-incl. heavy ties, seed 123).
+including heavy ties, seed 123).
 
 | check | max abs deviation |
 |---|---|
@@ -64,20 +64,22 @@ incl. heavy ties, seed 123).
 | KS p-value vs scipy `mode="asymp"` | 0.02072 |
 | PSI vs independent naive loop implementation | 1.11e-16 |
 
-KS p-value note: own p-value uses the Kolmogorov limit distribution; scipy's
-asymp mode uses a finite-n refinement (`kstwo`). Worst deviation occurs at
-p≈0.65 with n1,n2≈380 — irrelevant to the 1e-3 alert threshold. PSI note: the
-naive oracle uses the same `np.linspace` quantile positions because a 1-ulp
-difference in the position (0.3 vs 0.30000000000000004) can flip a data point
-across a bin edge when (n-1)*q is an exact integer; binning/counting/formula
-are independent code.
+On the KS p-value: my implementation uses the Kolmogorov limit distribution
+while scipy's asymp mode uses a finite-n refinement (`kstwo`). The worst
+deviation occurs at p around 0.65 with n1,n2 around 380, which is irrelevant
+to the 1e-3 alert threshold. On PSI: the naive oracle deliberately uses the
+same `np.linspace` quantile positions, because a 1-ulp difference in the
+position (0.3 vs 0.30000000000000004) can flip a data point across a bin
+edge when (n-1)*q is an exact integer; the binning, counting and formula are
+independent code.
 
 ## 3. Regression gates: healthy vs degraded model
 
 Reproduce: `.venv/bin/python model/gates_report.py` ->
 `results/gates_matrix.json`. Golden split n=9,768. Thresholds: accuracy >=
 0.84, ROC-AUC >= 0.88, ECE <= 0.06, slice accuracy >= 0.75 (slices with n >=
-50). Degraded model = same pipeline retrained with 40% flipped labels.
+50). The degraded model is the same pipeline retrained with 40% flipped
+labels.
 
 | gate | healthy | degraded | threshold | healthy | degraded |
 |---|---|---|---|---|---|
@@ -109,21 +111,22 @@ Per-slice accuracy (healthy): sex=Female 0.9287, sex=Male 0.8178,
 race=Amer-Indian-Eskimo 0.8764, race=Asian-Pac-Islander 0.8121,
 race=Black 0.9004, race=Other 0.8989, race=White 0.8502.
 
-## 5. Throughput & latency (best of 5 runs)
-
-**Honesty tag:** API latencies via in-process FastAPI TestClient — no network
-socket, no uvicorn. Drift-engine throughput is wall clock over
-pre-materialized 500-row windows (10,000 rows per run).
+## 5. Throughput and latency (best of 5 runs)
 
 Reproduce: `.venv/bin/python bench/run_bench.py` -> `results/bench.json`
 
-| benchmark | best | median (runs) |
-|---|---|---|
-| drift engine throughput | 148,828 rows/sec | 147,833 rows/sec |
-| POST /score latency (1,000 req/run) | p50 2.613 ms / p95 3.108 ms | — |
-| GET /drift latency (200 req/run) | p50 1.937 ms / p95 2.418 ms | — |
+| benchmark | result |
+|---|---|
+| drift engine throughput | best 148,828 rows/sec, median 147,833 rows/sec |
+| POST /score latency (1,000 req/run) | p50 2.613 ms / p95 3.108 ms |
+| GET /drift latency (200 req/run) | p50 1.937 ms / p95 2.418 ms |
 
-## 6. Tests & coverage
+The API latencies are in-process via FastAPI's TestClient, so there is no
+network socket, no uvicorn worker, and no wire serialization in these
+numbers. Drift-engine throughput is wall clock over pre-materialized 500-row
+windows (10,000 rows per run).
+
+## 6. Tests and coverage
 
 Reproduce:
 `.venv/bin/python -m pytest tests/ --cov=modelwatch --cov-report=term --color=no -rN`
@@ -132,9 +135,10 @@ Reproduce:
 - **Coverage on `modelwatch/`: 100%** (414/414 statements: api.py 95,
   gates.py 53, monitor.py 161, stats.py 104, `__init__.py` 1).
 
-## Not measured
+## What I did not measure
 
-- Real-network API latency (would need uvicorn + a client over a socket) —
-  out of scope per spec; in-process numbers are tagged as such.
-- Real-world (non-injected) drift precision/recall — no labeled real drift
-  exists for this dataset; all drift ground truth is synthetic by design.
+- Real-network API latency: that would need uvicorn plus a client over an
+  actual socket. The in-process numbers above stand in for it.
+- Real-world (non-injected) drift precision and recall: no labeled real
+  drift exists for this dataset, so all drift ground truth is synthetic by
+  design.

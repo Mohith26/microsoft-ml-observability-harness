@@ -1,19 +1,28 @@
-# ModelWatch — ML Observability & Drift-Detection Harness
+# ModelWatch: an ML observability and drift-detection harness
 
-A Python harness that monitors a trained model in "production": ingests scoring
-traffic, detects covariate/prediction drift (PSI, two-sample KS) against a
-training baseline, tracks label-free health signals (missing-value rate,
-out-of-range rate, category novelty), runs golden-dataset regression gates
-(accuracy / ROC-AUC / calibration / per-slice accuracy), and exposes everything
-over FastAPI with Prometheus-style metrics.
+I built ModelWatch to answer a question I kept running into: when people say
+a drift detector "works", how would you actually know? Most monitoring demos
+show PSI and KS numbers going up and call it a day. Here I score the detector
+itself: a seeded scenario generator replays held-out UCI Adult rows, injects
+labeled drift episodes, and the harness computes precision, recall and F1 for
+the detector at both the window level and the episode level.
 
-Drift detection quality is **measured against ground truth**: a seeded scenario
-generator replays held-out UCI Adult rows and injects labeled drift episodes;
-precision/recall/F1 are computed at window and episode level. Statistic
-implementations are verified against scipy / naive oracles. All measured
-numbers live in [RESULTS.md](RESULTS.md) and `results/*.json`.
+The harness monitors a trained model in a mock production setting: it ingests
+scoring traffic, detects covariate and prediction drift (PSI, two-sample KS)
+against a training baseline, tracks label-free health signals (missing-value
+rate, out-of-range rate, category novelty), runs golden-dataset regression
+gates (accuracy, ROC-AUC, calibration, per-slice accuracy), and exposes all
+of it over FastAPI with Prometheus-style metrics. The statistic
+implementations are my own and are verified against scipy and naive oracle
+loops. All measured numbers live in [RESULTS.md](RESULTS.md) and
+`results/*.json`.
 
-## Architecture
+Headline results: window-level drift detection scored 0.99 precision at 1.00
+recall against ground truth (all 32 injected episodes caught, 1 false alarm),
+my KS statistic matches scipy exactly, and the release gates correctly pass
+the healthy model and fail a deliberately degraded one on 4 of 10 gates.
+
+## How the pieces fit together
 
 ```
                         +--------------------+
@@ -34,21 +43,44 @@ numbers live in [RESULTS.md](RESULTS.md) and `results/*.json`.
    GET /health -> liveness + buffer state  GET /metrics -> Prometheus text
 ```
 
-- `modelwatch/stats.py` — own implementations of PSI (10-bin quantile,
+- `modelwatch/stats.py`: my implementations of PSI (10-bin quantile binning,
   rare-category pooling for categoricals), two-sample KS (statistic exact vs
   scipy; asymptotic Kolmogorov p-value), and ECE.
-- `modelwatch/monitor.py` — baseline profiling + tumbling-window monitoring
+- `modelwatch/monitor.py`: baseline profiling plus tumbling-window monitoring
   with configurable thresholds.
-- `modelwatch/gates.py` — golden-dataset regression gates incl. per-slice
-  accuracy (sex, race) as a responsible-AI release check.
-- `modelwatch/api.py` — FastAPI service, consistent
-  `{"ok", "data", "error"}` envelope, Prometheus counters/histogram/gauge.
-- `model/train.py` — trains the reference + deliberately degraded model,
-  persists baseline profile and data splits.
-- `eval/` — seeded scenario generator + ground-truth drift evaluation.
-- `bench/` — throughput/latency benchmarks and statistic-oracle checks.
+- `modelwatch/gates.py`: golden-dataset regression gates, including per-slice
+  accuracy on sex and race so a release that quietly degrades one group gets
+  caught.
+- `modelwatch/api.py`: FastAPI service with a consistent
+  `{"ok", "data", "error"}` envelope and Prometheus counters, histogram and
+  gauge.
+- `model/train.py`: trains the reference model and a deliberately degraded
+  twin, persists the baseline profile and data splits.
+- `eval/`: seeded scenario generator plus ground-truth drift evaluation.
+- `bench/`: throughput and latency benchmarks, statistic-oracle checks.
 
-## Quickstart
+## The model under observation
+
+The monitoring subject is a scikit-learn `LogisticRegression` (max_iter=2000)
+on median-imputed and standardized numerics plus constant-imputed one-hot
+categoricals (`handle_unknown="ignore"`), trained on UCI Adult / "Census
+Income" (OpenML `adult` version 2, 48,842 rows, a 1994 US Census extract).
+Splits are 60% train / 20% golden / 20% traffic, stratified, seed 42, fetched
+via `sklearn.datasets.fetch_openml` into a gitignored `data/` cache.
+
+On the golden split it scores accuracy 0.8545, ROC-AUC 0.9089, ECE 0.0101,
+with per-slice accuracy from 0.8121 (race=Asian-Pac-Islander, n=314) to
+0.9287 (sex=Female, n=3,238). A degraded twin, retrained with 40% of training
+labels flipped (seed 42), exists to prove the gates fail in the bad
+direction.
+
+A note on the data: UCI Adult encodes 1994 census demographics and historical
+income disparities, and slice accuracy differs by up to ~11 points across
+sex/race groups. The task (income >50K) is used here purely as a realistic
+monitoring subject; the per-slice gates exist precisely to surface those
+disparities. Nobody should use this model for real decisions about people.
+
+## Running it
 
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -U pip
@@ -66,40 +98,19 @@ python3 -m venv .venv && .venv/bin/pip install -U pip
 .venv/bin/uvicorn modelwatch.api:create_app --factory  # serve (optional)
 ```
 
-## Model card
+## Limitations
 
-- **Model**: scikit-learn `LogisticRegression` (max_iter=2000) on
-  median-imputed + standardized numerics and constant-imputed + one-hot
-  categoricals (`handle_unknown="ignore"`). A deliberately **degraded** twin is
-  retrained with 40% of training labels flipped (seed 42) to prove the gates
-  fail in the bad direction.
-- **Task**: binary income classification (>50K vs <=50K), used here purely as
-  a realistic monitoring subject — not as a deployable income predictor.
-- **Data**: UCI Adult / "Census Income" (OpenML `adult` version 2, 48,842
-  rows, 1994 US Census extract). Splits: 60% train / 20% golden / 20% traffic,
-  stratified, seed 42. Downloaded via `sklearn.datasets.fetch_openml` with
-  scikit-learn's ARFF checksum-validated cache under `data/` (gitignored).
-- **Measured performance** (golden split): accuracy 0.8545, ROC-AUC 0.9089,
-  ECE 0.0101. Per-slice accuracy ranges from 0.8121 (race=Asian-Pac-Islander,
-  n=314) to 0.9287 (sex=Female, n=3,238) — full table in RESULTS.md.
-- **Caveats / responsible-AI notes**: the dataset encodes 1994 census
-  demographics and historical income disparities; sex/race slice accuracy
-  differs by up to ~11 points. Labels reflect a $50K threshold that is not
-  inflation-adjusted. This repo uses the dataset as a standard monitoring
-  benchmark; per-slice gates exist precisely to surface such disparities.
-  Do not use this model for real decisions about people.
-
-## Honest limits
-
-- **Injected, not real-world, drift**: eval ground truth is synthetic drift
-  (demographic resampling, feature scaling, missing spikes, novel categories,
-  score-weighted resampling) applied to real held-out rows. Real-world drift
-  is messier; these numbers upper-bound what the same detector would do there.
-- **In-process latency**: API p50/p95 use FastAPI's TestClient (no network
-  socket, no uvicorn worker, no serialization over a wire).
-- **KS p-value**: statistic matches scipy exactly; the p-value uses the
-  Kolmogorov limit distribution, deviating ≤0.0207 from scipy's finite-n
-  `asymp` mode (worst case at p≈0.65 — far from the 1e-3 alert threshold).
-- **Single tumbling window** per monitor (500 rows); no multi-resolution
-  windows, no streaming infra, no retraining loop, no auth, no dashboard
-  (out of scope by design).
+- Drift ground truth is injected synthetically (demographic resampling,
+  feature scaling, missing-value spikes, novel categories, score-weighted
+  resampling) on real held-out UCI Adult rows. So the eval measures detector
+  correctness against known drift, not real-world drift, which is messier;
+  treat the precision/recall numbers as an upper bound.
+- API latency is measured in-process with FastAPI's TestClient, so it
+  excludes the network hop, uvicorn workers, and wire serialization.
+- My KS statistic matches scipy exactly, but the p-value uses the Kolmogorov
+  limit distribution and deviates up to 0.0207 from scipy's finite-n `asymp`
+  mode. The worst case sits near p=0.65, far from the 1e-3 alert threshold,
+  so it never changes a verdict here.
+- One tumbling window per monitor (500 rows). No multi-resolution windows,
+  no streaming infrastructure, no retraining loop, no auth, no dashboard. I
+  kept the scope on detection quality, not platform plumbing.
